@@ -149,7 +149,7 @@ const VALID = { name: 'party', userId: 1 }
 // Circuit breaker examples
 // ---------------------------------------------------------------------------
 
-test('9.1 a new breaker is Closed with nothing scheduled', (t) => {
+test('a new breaker is Closed with nothing scheduled', (t) => {
   useMockTime(t)
   const b = setupBreaker()
   assert.strictEqual(b.breaker.state(), 'Closed')
@@ -157,7 +157,7 @@ test('9.1 a new breaker is Closed with nothing scheduled', (t) => {
   assert.strictEqual(b.sent.length, 0)
 })
 
-test('9.2 9.3 three failures within 30 s open the breaker; the first Retry sends the 3rd payload', async (t) => {
+test('three failures within 30 s open the breaker; the first Retry sends the 3rd payload', async (t) => {
   useMockTime(t)
   const b = setupBreaker()
   await fail(b, event(1))
@@ -178,7 +178,7 @@ test('9.2 9.3 three failures within 30 s open the breaker; the first Retry sends
   await flush()
 })
 
-test('9.4 failures older than 30 s do not count', async (t) => {
+test('failures older than 30 s do not count', async (t) => {
   useMockTime(t)
   const b = setupBreaker()
   await fail(b, event(1))
@@ -192,7 +192,7 @@ test('9.4 failures older than 30 s do not count', async (t) => {
   assert.strictEqual(b.breaker.state(), 'Open')
 })
 
-test('9.5 a status below 500 leaves the recorded failures alone', async (t) => {
+test('a status below 500 leaves the recorded failures alone', async (t) => {
   useMockTime(t)
   const b = setupBreaker()
   await fail(b, event(1))
@@ -206,7 +206,7 @@ test('9.5 a status below 500 leaves the recorded failures alone', async (t) => {
   assert.strictEqual(b.breaker.state(), 'Open')
 })
 
-test('9.6 every state change is logged with from and to', async (t) => {
+test('every state change is logged with from and to', async (t) => {
   useMockTime(t)
   const b = setupBreaker()
   for (let i = 1; i <= 3; i++) await fail(b, event(i))
@@ -222,7 +222,7 @@ test('9.6 every state change is logged with from and to', async (t) => {
   ])
 })
 
-test('10.1 the first Retry fires exactly 20 000 ms after opening', async (t) => {
+test('the first Retry fires exactly 20 000 ms after opening', async (t) => {
   useMockTime(t)
   const b = setupBreaker()
   t.mock.timers.tick(5_000)
@@ -232,7 +232,7 @@ test('10.1 the first Retry fires exactly 20 000 ms after opening', async (t) => 
   await flush()
 })
 
-test('10.2 a Retry moves to Retrying and sends the Pending_Request once with its original id', async (t) => {
+test('a Retry moves to Retrying and sends the Pending_Request once with its original id', async (t) => {
   useMockTime(t)
   const b = setupBreaker()
   for (let i = 1; i <= 3; i++) await fail(b, event(i))
@@ -250,7 +250,7 @@ test('10.2 a Retry moves to Retrying and sends the Pending_Request once with its
   assert.strictEqual(b.sent.at(-1).id, 'id-3')
 })
 
-test('10.3 10.4 10.5 failed Retries wait 40 s, then 60 s, from their end; a successful one closes and resets to 20 s', async (t) => {
+test('failed Retries wait 40 s, then 60 s, from their end; a successful one closes and resets to 20 s', async (t) => {
   useMockTime(t)
   const b = setupBreaker()
   for (let i = 1; i <= 3; i++) await fail(b, event(i))
@@ -306,7 +306,7 @@ test('10.3 10.4 10.5 failed Retries wait 40 s, then 60 s, from their end; a succ
 // Routes (fake fetch)
 // ---------------------------------------------------------------------------
 
-test('3.1 /health returns ok and the breaker state without calling upstream', async (t) => {
+test('/health returns ok and the breaker state without calling upstream', async (t) => {
   const { app, fetch } = setupApp(t)
   const res = await app.inject('/health')
   assert.strictEqual(res.statusCode, 200)
@@ -314,14 +314,14 @@ test('3.1 /health returns ok and the breaker state without calling upstream', as
   assert.strictEqual(fetch.calls.length, 0)
 })
 
-test('4.4 an unknown route returns 404 NOT_FOUND', async (t) => {
+test('an unknown route returns 404 NOT_FOUND', async (t) => {
   const { app } = setupApp(t)
   const res = await app.inject('/nope')
   assert.strictEqual(res.statusCode, 404)
   assert.deepStrictEqual(res.json(), { error: 'NOT_FOUND', message: 'Route not found' })
 })
 
-test('4.1 4.5 /getUsers and /getEvents map upstream 503 and network errors to 502 without the upstream body', async (t) => {
+test('/getUsers and /getEvents map upstream 503 and network errors to 502 without the upstream body', async (t) => {
   for (const path of ['/getUsers', '/getEvents']) {
     for (const reply of [upstream(503), new TypeError('fetch failed')]) {
       const { app } = setupApp(t, { [path]: reply })
@@ -334,7 +334,7 @@ test('4.1 4.5 /getUsers and /getEvents map upstream 503 and network errors to 50
   }
 })
 
-test('4.2 an upstream call that exceeds the timeout returns 502', async (t) => {
+test('an upstream call that exceeds the timeout returns 502', async (t) => {
   // Never answers; rejects when the timeout aborts init.signal.
   const hang = (init) => new Promise((_, reject) => init.signal.addEventListener('abort', () => reject(init.signal.reason)))
   const { app } = setupApp(t, { '/getUsers': hang }, { upstreamTimeoutMs: 50 })
@@ -343,7 +343,7 @@ test('4.2 an upstream call that exceeds the timeout returns 502', async (t) => {
   assert.deepStrictEqual(res.json(), UPSTREAM_ERROR)
 })
 
-test('5.2 an invalid addEvent body returns 400 without calling upstream', async (t) => {
+test('an invalid addEvent body returns 400 without calling upstream', async (t) => {
   const json = { 'content-type': 'application/json' }
   const cases = [
     { label: 'missing body', req: {}, field: /body|JSON object/ },
@@ -365,7 +365,7 @@ test('5.2 an invalid addEvent body returns 400 without calling upstream', async 
   }
 })
 
-test('5.4 a bad user id returns 400 without calling upstream', async (t) => {
+test('a bad user id returns 400 without calling upstream', async (t) => {
   for (const id of ['a.b', 'a%20b', '%3Cscript%3E', '..%2F1']) {
     const { app, fetch } = setupApp(t)
     const res = await app.inject('/getEventsByUserId/' + id)
@@ -375,7 +375,7 @@ test('5.4 a bad user id returns 400 without calling upstream', async (t) => {
   }
 })
 
-test('5.1 5.3 addEvent forwards only name, userId, details and a new id', async (t) => {
+test('addEvent forwards only name, userId, details and a new id', async (t) => {
   const cases = [
     { id: 'client-id', name: 'x', userId: 1, details: 'd', extra: true },
     { id: 7, name: 'x', userId: 'u-1' },
@@ -393,7 +393,7 @@ test('5.1 5.3 addEvent forwards only name, userId, details and a new id', async 
   }
 })
 
-test('8.1 every getEventById call starts before any of them completes', async (t) => {
+test('every getEventById call starts before any of them completes', async (t) => {
   const ids = ['a', 'b', 'c', 'd']
   let started = 0
   let release
@@ -413,7 +413,7 @@ test('8.1 every getEventById call starts before any of them completes', async (t
   assert.strictEqual(started, ids.length)
 })
 
-test('8.3 8.4 events come back in the order of the user\'s events list', async (t) => {
+test('events come back in the order of the user\'s events list', async (t) => {
   const delays = { e3: 30, e1: 0, e2: 15, e4: 5 } // completion order differs from request order
   const ids = ['e3', 'e1', 'e2', 'e1', 'e4']
   const routes = { '/getUserById/u1': Response.json({ events: ids }) }
@@ -429,7 +429,7 @@ test('8.3 8.4 events come back in the order of the user\'s events list', async (
   assert.deepStrictEqual(res.json(), ids.map((id) => ({ id, ms: delays[id] })))
 })
 
-test('8.5 an empty, null or 404 user returns 404 NOT_FOUND', async (t) => {
+test('an empty, null or 404 user returns 404 NOT_FOUND', async (t) => {
   const users = { empty: new Response(''), null: Response.json(null), 404: new Response(null, { status: 404 }) }
   for (const [label, reply] of Object.entries(users)) {
     const { app, fetch } = setupApp(t, { '/getUserById/9': reply })
@@ -440,7 +440,7 @@ test('8.5 an empty, null or 404 user returns 404 NOT_FOUND', async (t) => {
   }
 })
 
-test('8.6 one failing or null event returns 502 with no partial results', async (t) => {
+test('one failing or null event returns 502 with no partial results', async (t) => {
   for (const [label, bad] of [['500', upstream(500)], ['null', Response.json(null)]]) {
     const { app } = setupApp(t, {
       '/getUserById/1': Response.json({ events: ['ok', 'bad'] }),
@@ -455,7 +455,7 @@ test('8.6 one failing or null event returns 502 with no partial results', async 
   }
 })
 
-test('11.1 a 2xx from upstream returns 201 with the id that was sent', async (t) => {
+test('a 2xx from upstream returns 201 with the id that was sent', async (t) => {
   for (const status of [200, 201, 204]) {
     const { app, fetch } = setupApp(t, { '/addEvent': new Response(null, { status }) })
     const res = await addEvent(app, { ...VALID, details: 'd' })
@@ -464,7 +464,7 @@ test('11.1 a 2xx from upstream returns 201 with the id that was sent', async (t)
   }
 })
 
-test('11.2 an upstream 503, 404 or network error returns 502', async (t) => {
+test('an upstream 503, 404 or network error returns 502', async (t) => {
   for (const reply of [upstream(503), upstream(404), new TypeError('fetch failed')]) {
     const { app } = setupApp(t, { '/addEvent': reply })
     const res = await addEvent(app, VALID)
@@ -484,7 +484,7 @@ async function openBreaker(app) {
   assert.strictEqual((await app.inject('/health')).json().circuitBreaker, 'Open')
 }
 
-test('11.3 while Open or Retrying, addEvent returns 503 with Retry-After and does not call upstream', async (t) => {
+test('while Open or Retrying, addEvent returns 503 with Retry-After and does not call upstream', async (t) => {
   useMockTime(t)
   let finishRetry
   const { app, fetch } = setupApp(t, {
@@ -521,7 +521,7 @@ test('11.3 while Open or Retrying, addEvent returns 503 with Retry-After and doe
   assert.strictEqual((await app.inject('/health')).json().circuitBreaker, 'Closed')
 })
 
-test('3.2 app.close() clears the scheduled Retry', async (t) => {
+test('app.close() clears the scheduled Retry', async (t) => {
   useMockTime(t)
   const { app, fetch } = setupApp(t, { '/addEvent': upstream(503) })
   await openBreaker(app)
@@ -548,7 +548,7 @@ function mockFetch(url, init) {
   return globalThis.fetch(url, init)
 }
 
-test('8.2 10 and 50 events from the real mock (500 ms each) come back in under 1 500 ms', async (t) => {
+test('10 and 50 events from the real mock (500 ms each) come back in under 1 500 ms', async (t) => {
   for (const n of [10, 50]) {
     const events = Array.from({ length: n }, (_, i) => `event-${(i % 4) + 1}`)
     const { app } = setupApp(t, {}, {
@@ -566,7 +566,7 @@ test('8.2 10 and 50 events from the real mock (500 ms each) come back in under 1
 })
 
 // Must run before the addEvent test below, which appends a new event to user 1 in the mock's memory.
-test('8.3 end-to-end getEventsByUserId/1 against the real mock returns event-1 and event-3 in order', async (t) => {
+test('end-to-end getEventsByUserId/1 against the real mock returns event-1 and event-3 in order', async (t) => {
   const { app } = setupApp(t, {}, { eventApiUrl: MOCK_URL, fetch: mockFetch })
   const res = await app.inject('/getEventsByUserId/1')
   assert.strictEqual(res.statusCode, 200, res.body)
@@ -577,7 +577,7 @@ test('8.3 end-to-end getEventsByUserId/1 against the real mock returns event-1 a
 })
 
 // The process's first addEvent through the mock: its count-based cycle answers 200 for requests 1–5.
-test('11.1 end-to-end addEvent against the real mock returns 201 with the generated id', async (t) => {
+test('end-to-end addEvent against the real mock returns 201 with the generated id', async (t) => {
   const { app } = setupApp(t, {}, { eventApiUrl: MOCK_URL, fetch: mockFetch })
   const res = await addEvent(app, VALID)
   assert.strictEqual(res.statusCode, 201, res.body)
